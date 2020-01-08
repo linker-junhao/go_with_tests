@@ -9,7 +9,7 @@ func assertStrings(t *testing.T, got, want string) {
 	}
 }
 
-func assertErr(t *testing.T, got, want error) {
+func assertErr(t *testing.T, got, want DictionaryErr) {
 	t.Helper()
 	if got.Error() != want.Error() {
 		t.Errorf("got error '%s' want '%s' ", got.Error(), want.Error())
@@ -21,7 +21,7 @@ func assertDefinition(t *testing.T, dictionary Dictionary, keyword, definition s
 	got, err := dictionary.Search(keyword)
 	want := definition
 
-	if err != nil {
+	if err != "" {
 		t.Fatal("should find added word:", err)
 	}
 
@@ -48,10 +48,61 @@ func TestSearch(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-	dictionary := Dictionary{}
-	keyword := "test"
-	definition := "this is just a test"
-	dictionary.Add(keyword, definition)
+	t.Run("new word", func(t *testing.T) {
+		dictionary := Dictionary{}
+		keyword := "test"
+		definition := "this is just a test"
 
-	assertDefinition(t, dictionary, keyword, definition)
+		err := dictionary.Add(keyword, definition)
+
+		assertErr(t, err, DictionaryErr(""))
+		assertDefinition(t, dictionary, keyword, definition)
+	})
+
+	t.Run("existing word", func(t *testing.T) {
+		word := "test"
+		definition := "this is just a test"
+		dictionary := Dictionary{word: definition}
+		err := dictionary.Add(word, definition)
+
+		assertErr(t, err, errWordAlreadyExist)
+		assertDefinition(t, dictionary, word, definition)
+	})
+
+}
+
+func TestUpdate(t *testing.T) {
+
+	t.Run("existing word", func(t *testing.T) {
+		keyword := "test"
+		definition := "this is just a test"
+		dictionary := Dictionary{keyword: definition}
+		newDefinition := "new definition"
+
+		err := dictionary.Update(keyword, newDefinition)
+
+		assertErr(t, err, "")
+		assertDefinition(t, dictionary, keyword, newDefinition)
+	})
+
+	t.Run("new word update", func(t *testing.T) {
+		word := "test"
+		definition := "this is just a test"
+		dictionary := Dictionary{}
+
+		err := dictionary.Update(word, definition)
+
+		assertErr(t, err, errKeywordDoesNotExist)
+	})
+}
+
+func TestDelete(t *testing.T) {
+	keyword := "test"
+	dictionary := Dictionary{keyword: "test definition"}
+
+	dictionary.Delete(keyword)
+
+	_, err := dictionary.Search(keyword)
+
+	assertErr(t, err, errKeywordNotFind)
 }

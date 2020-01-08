@@ -1,5 +1,13 @@
 package maps
 
-import "errors"
+type DictionaryErr string
 
-var errKeywordNotFind = errors.New("could not find the keyword you were looking for")
+const (
+	errKeywordNotFind      = DictionaryErr("could not find the keyword you were looking for")
+	errWordAlreadyExist    = DictionaryErr("the keyword you insert is already exist")
+	errKeywordDoesNotExist = DictionaryErr("the keyword does not exist")
+)
+
+func (e DictionaryErr) Error() string {
+	return string(e)
+}
